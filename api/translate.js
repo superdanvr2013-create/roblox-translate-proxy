@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   const { text, source = 'en', target = 'ru' } = req.body;
 
   try {
-    const libreResponse = await fetch('https://translate.argosopentech.com/translate', {
+    const libreResponse = await fetch('https://libretranslate.com/translate', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/x-www-form-urlencoded',
