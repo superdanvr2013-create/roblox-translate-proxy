@@ -8,8 +8,6 @@ export default async function handler(req, res) {
 
   let { text, source = 'auto', target = 'ru' } = req.body;
   
-  // ✅ Фикс: source='auto' по умолчанию (автоопределение)
-  // ✅ Обязательная проверка target
   if (!text || !target) {
     return res.status(400).json({ error: 'Missing text or target language' });
   }
@@ -24,11 +22,24 @@ export default async function handler(req, res) {
     }
     
     const data = await response.json();
-    const translated = data[0][0][0];  // Основной перевод
+    
+    // ✅ ИСПРАВЛЕНИЕ: собираем ВСЕ предложения!
+    let translated = '';
+    if (data[0] && Array.isArray(data[0])) {
+      for (let sentence of data[0]) {
+        if (sentence[0]) {
+          translated += sentence[0] + ' ';
+        }
+      }
+      translated = translated.trim();  // Убираем лишние пробелы
+    } else {
+      translated = data[0]?.[0]?.[0] || text;  // Fallback для коротких текстов
+    }
     
     res.json({ 
       translatedText: translated,
-      detectedSource: data[2] || source,  // Бонус: обнаруженный язык
+      detectedSource: data[2] || source,
+      sentencesCount: data[0] ? data[0].length : 0,
       target: target 
     });
     
@@ -37,7 +48,7 @@ export default async function handler(req, res) {
     res.status(500).json({ 
       error: 'Translation failed', 
       details: error.message,
-      input: { text: text?.substring(0, 50), source, target }
+      inputLength: text.length
     });
   }
 }
